@@ -126,6 +126,47 @@ export default async function handler(req, res) {
       return res.status(200).json({ summary: result.trim() });
     }
 
+    if (action === "categorize") {
+      const { items } = req.body; // [{ id, title }]
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "Missing items" });
+      }
+      // One batch call for up to 50 titles — never one API call per expense
+      const safeItems = items.slice(0, 50).map((it) => ({
+        id: String(it.id).slice(0, 20),
+        title: String(it.title || "").slice(0, 60),
+      }));
+
+      const prompt =
+        "Classify each expense title into EXACTLY one of these categories:\n" +
+        '"Food & Drinks", "Transport", "Bills & Utilities", "Shopping", ' +
+        '"Health & Fitness", "Entertainment", "Other"\n\n' +
+        "These are from a Malaysian user — local terms are common " +
+        "(mamak and warung are eateries, Touch 'n Go is transport payments, " +
+        "Celcom/Maxis/Digi/U Mobile are telcos, Mr DIY is a hardware store, " +
+        "GSC/TGV are cinemas).\n\n" +
+        "Expenses:\n" +
+        JSON.stringify(safeItems) +
+        '\n\nRespond with ONLY a JSON object mapping id to category, ' +
+        'like {"abc123": "Transport", "def456": "Food & Drinks"}. ' +
+        "No markdown fences, no explanation.";
+
+      const result = await callGemini(apiKey, [{ parts: [{ text: prompt }] }]);
+      const parsed = extractJSON(result);
+      if (!parsed) return res.status(502).json({ error: "Could not parse categories" });
+
+      // Only pass through valid category names
+      const VALID = new Set([
+        "Food & Drinks", "Transport", "Bills & Utilities",
+        "Shopping", "Health & Fitness", "Entertainment", "Other",
+      ]);
+      const categories = {};
+      for (const [id, cat] of Object.entries(parsed)) {
+        if (VALID.has(cat)) categories[id] = cat;
+      }
+      return res.status(200).json({ categories });
+    }
+
     return res.status(400).json({ error: "Unknown action" });
   } catch (err) {
     console.error("AI proxy error:", err);

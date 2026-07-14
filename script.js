@@ -24,14 +24,15 @@ var MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct",
 var MONTHS_LONG = ["January","February","March","April","May","June",
                    "July","August","September","October","November","December"];
 
-/* Simple keyword rules for auto-categorization (works offline, no AI needed) */
+/* Simple keyword rules for auto-categorization (instant, works offline).
+   These are the fast first guess — the AI refines them in the background. */
 var CATEGORY_RULES = [
-  { name: "Food & Drinks", keywords: ["nasi","lunch","dinner","breakfast","coffee","cafe","restaurant","food","mamak","kfc","mcd","pizza","grabfood","foodpanda"] },
-  { name: "Transport",     keywords: ["petrol","fuel","grab","toll","parking","train","bus","lrt","mrt","car service","tyre","touch n go","tng"] },
-  { name: "Bills & Utilities", keywords: ["insurance","bill","electric","water","wifi","internet","phone","astro","unifi","rent","loan"] },
-  { name: "Shopping",      keywords: ["tv","desk","shirt","shoes","shopee","lazada","clothes","bag","furniture","ikea"] },
-  { name: "Health & Fitness", keywords: ["gym","protein","clinic","pharmacy","vitamin","supplement","doctor"] },
-  { name: "Entertainment", keywords: ["movie","cinema","game","steam","netflix","spotify","concert"] }
+  { name: "Food & Drinks", keywords: ["nasi","ayam","mee","maggi","roti","satay","laksa","gepuk","makan","teh","kopi","tealive","zus","boba","bubble tea","lunch","dinner","breakfast","coffee","cafe","restaurant","food","mamak","warung","kfc","mcd","mcdonald","pizza","burger","grabfood","foodpanda","shopeefood","snack","kuih","western","bakery"] },
+  { name: "Transport",     keywords: ["petrol","fuel","ron95","ron97","grab","toll","parking","train","bus","lrt","mrt","ktm","car service","tyre","touch n go","tng","rapid","gojek","flight","airasia"] },
+  { name: "Bills & Utilities", keywords: ["insurance","insurans","bill","electric","tnb","water","air selangor","wifi","internet","phone","prepaid","postpaid","celcom","maxis","digi","umobile","u mobile","yes 5g","topup","top up","astro","unifi","rent","sewa","loan","pinjaman","zakat"] },
+  { name: "Shopping",      keywords: ["tv","desk","shirt","baju","kasut","shoes","shopee","lazada","tiktok shop","clothes","bag","furniture","ikea","mr diy","mr. diy","watch","laptop","mouse","keyboard"] },
+  { name: "Health & Fitness", keywords: ["gym","protein","creatine","clinic","klinik","pharmacy","farmasi","guardian","watsons","vitamin","supplement","doctor","dental","gigi"] },
+  { name: "Entertainment", keywords: ["movie","cinema","gsc","tgv","game","steam","ps5","xbox","netflix","spotify","youtube premium","concert","karaoke","bowling"] }
 ];
 
 /* ---------- State ---------- */
@@ -203,7 +204,7 @@ function renderList() {
     $item.find(".ed-year").text(d.getFullYear());
     $item.find(".ed-day").text(d.getDate());
     $item.find(".expense-title").text(e.title);
-    $item.find(".expense-category").text(categorize(e.title));
+    $item.find(".expense-category").text(e.category || categorize(e.title));
     $item.find(".expense-amount").text(formatRM(e.amount));
     $item.data("id", e.id);
     $list.append($item.hide().fadeIn(250));
@@ -271,7 +272,10 @@ function handleSubmit(ev) {
 
   if (editingId) {
     var target = expenses.find(function (e) { return e.id === editingId; });
-    if (target) $.extend(target, data);
+    if (target) {
+      $.extend(target, data);
+      delete target.category; // title may have changed — re-categorize
+    }
     showToast("Expense updated.");
   } else {
     expenses.push($.extend({ id: uid() }, data));
@@ -282,6 +286,7 @@ function handleSubmit(ev) {
   selectedYear = new Date(data.date).getFullYear(); // jump to the year just used
   closeForm();
   renderAll();
+  aiCategorizePending(); // refine the new expense's tag in the background
 }
 
 /* ---------- Edit / delete ---------- */
@@ -419,7 +424,7 @@ function handleAISummary() {
   var yearExpenses = expenses
     .filter(function (e) { return new Date(e.date).getFullYear() === selectedYear; })
     .map(function (e) {
-      return { title: e.title, amount: e.amount, date: e.date, category: categorize(e.title) };
+      return { title: e.title, amount: e.amount, date: e.date, category: e.category || categorize(e.title) };
     });
 
   if (yearExpenses.length === 0) {
@@ -463,11 +468,43 @@ function setSummaryLoading(loading) {
   $("#aiSummarySpinner").toggleClass("d-none", !loading);
 }
 
+/* ----- Feature 3: AI categorization (background refinement) -----
+   Keyword rules give an instant guess; this sends any expense without a
+   stored category to the AI in ONE batch call and corrects the tags.
+   If the AI is unreachable, the keyword tags simply remain. */
+
+function aiCategorizePending() {
+  if (aiAvailable === false) return;
+
+  var pending = expenses
+    .filter(function (e) { return !e.category; })
+    .map(function (e) { return { id: e.id, title: e.title }; });
+
+  if (pending.length === 0) return;
+
+  callAI({ action: "categorize", items: pending })
+    .then(function (data) {
+      var changed = false;
+      expenses.forEach(function (e) {
+        if (data.categories && data.categories[e.id]) {
+          e.category = data.categories[e.id];
+          changed = true;
+        }
+      });
+      if (changed) {
+        saveExpenses();
+        renderList(); // update tags in place
+      }
+    })
+    .catch(function () { /* silent — keyword-based tags remain */ });
+}
+
 /* ---------- Init ---------- */
 
 $(function () {
   loadExpenses();
   renderAll();
+  aiCategorizePending(); // fix tags for any expenses added before AI categorization existed
 
   // If opened via file:// there is definitely no serverless proxy
   if (location.protocol === "file:") {
