@@ -120,7 +120,7 @@ export default async function handler(req, res) {
         `and the dominant category with its share of total spending. ` +
         `Then end the paragraph with one specific, actionable financial suggestion based on the actual data ` +
         `(for example a recurring cost worth reviewing, a category to set a budget for, or a savings habit). ` +
-        `Be specific with RM amounts and percentages. Plain text only, no markdown, no bullet points, no headings.`;
+        `Be specific with RM amounts and percentages. Do NOT show any calculations or working — state final numbers only. Plain text only, no markdown, no bullet points, no headings.`;;
 
       const result = await callGemini(apiKey, [{ parts: [{ text: prompt }] }]);
       return res.status(200).json({ summary: result.trim() });
@@ -182,7 +182,11 @@ async function callGemini(apiKey, contents) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents,
-      generationConfig: { temperature: 0.2, maxOutputTokens: 500 },
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 4000, // thinking tokens count against this budget on newer Gemini models
+        thinkingConfig: { thinkingLevel: "low" }, // we pre-compute the stats, so deep reasoning is wasted
+      },
     }),
   });
 
