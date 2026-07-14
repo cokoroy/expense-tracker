@@ -1,75 +1,81 @@
 # Daily Expense Tracker
 
-A mobile-responsive expense tracker built for the SRKK technical assignment.
+A mobile-responsive expense tracker built with HTML, CSS, JavaScript, Bootstrap 5, and jQuery, with AI-assisted features served through a serverless proxy.
 
-**Live demo:** _(add your Vercel URL here)_
+**Live demo:** https://YOUR-PRODUCTION-DOMAIN.vercel.app
 
 ## Requirements coverage
 
-| Requirement | Status |
-|---|---|
-| 1. HTML, CSS, JavaScript | ✅ Plain HTML/CSS/JS — no framework, no build step |
-| 2. Bootstrap responsive design | ✅ Bootstrap 5 grid + custom styles, tested down to 360px |
-| 3. Monthly totals diagram (bonus) | ✅ Custom-built animated bar chart — no chart library |
-| 4. jQuery (bonus) | ✅ Used for DOM manipulation, events, and animations |
-| 5. Creative extra features (bonus) | ✅ See below |
+| # | Requirement | Status |
+|---|---|---|
+| 1 | HTML, CSS, and JavaScript | Done — plain HTML/CSS/JS, no framework, no build step |
+| 2 | Bootstrap mobile-responsive design | Done — Bootstrap 5 grid with custom styles, tested on real devices down to 360px |
+| 3 | Monthly totals diagram (bonus) | Done — custom-built animated bar chart, no chart library |
+| 4 | jQuery (bonus) | Done — DOM manipulation, event handling, and animations throughout |
+| 5 | Creative additional features (bonus) | Done — see below |
 
-### Core features
-- Add expense with **Title, Amount, Date** — empty/invalid submissions are blocked with inline validation messages
-- **Filter by year**; shows **"Found no expenses."** when the selected year is empty
-- **Monthly totals diagram** for the selected year, with animated bars and hover tooltips
+## Core features
 
-### Extra features
-- 📷 **AI receipt scanning** — upload/photograph a receipt and the form fills itself (title, amount, date)
-- ✨ **AI yearly insights** — one tap generates a natural-language summary of the year's spending
-- 💾 **localStorage persistence** — expenses survive page refresh
-- ✏️ **Edit & delete** expenses (with delete confirmation)
-- 🏷️ **Auto-categorization** — rule-based keyword tags (Food, Transport, Bills…), works fully offline
-- 📊 **Yearly total** strip and per-month values on the chart
-- 🇲🇾 **RM currency formatting**
+- Add expenses with Title, Amount, and Date; empty or invalid submissions are blocked with inline validation messages
+- Expense list filtered by selected year; an empty year shows "Found no expenses." as specified
+- Monthly totals for the selected year displayed as an animated bar chart with per-month values and hover tooltips
+
+## Additional features
+
+**AI receipt scanning.** Upload or photograph a receipt and the form auto-fills with the extracted title, amount, and date. The user reviews before adding — the app never inserts data silently.
+
+**AI yearly insights.** One click renders a category pie chart (computed locally) and generates a one-paragraph analysis of the year's spending with a practical financial suggestion.
+
+**Hybrid expense categorization.** Keyword rules tuned for Malaysian context (mamak, TNB, Touch 'n Go, telco prepaid, etc.) tag each expense instantly and offline. A single batched AI call then refines any uncategorized titles in the background, and results are cached permanently in the expense data. If the AI is unreachable, the keyword tags simply remain.
+
+**Quality-of-life.** localStorage persistence across sessions, edit and delete with confirmation, yearly total summary, Bootstrap Icons for a consistent professional UI, RM currency formatting, and realistic seeded demo data covering 2022–2026 and all categories on first visit.
 
 ## Architecture
 
 ```
-Browser (static HTML/CSS/JS + jQuery + Bootstrap)
-   │
-   │  fetch POST /api/ai        ← only for the two AI features
-   ▼
+Browser (static HTML/CSS/JS + Bootstrap + jQuery)
+   |
+   |  fetch POST /api/ai      (AI features only)
+   v
 Vercel Serverless Function (api/ai.js)
-   │  attaches GEMINI_API_KEY from environment variable
-   ▼
-Google Gemini API (gemini-2.0-flash)
+   |  attaches GEMINI_API_KEY from an environment variable
+   v
+Google Gemini API
 ```
 
-**Why a serverless proxy?** Calling an LLM API directly from the browser would
-expose the API key in the page source. The proxy keeps the key server-side,
-exposes only two narrow actions (`receipt`, `summary`), validates/bounds all
-inputs, and applies a simple rate limit to prevent abuse of the public URL.
+Calling an LLM API directly from the browser would expose the API key in the page source. The serverless proxy keeps the key server-side, exposes only three narrow actions (receipt, summary, categorize), validates and bounds all inputs, checks model output against an allowed category list before trusting it, and applies a simple rate limit against abuse of the public URL.
 
-**Graceful degradation:** if the page is opened as a local file (no server),
-the AI buttons show a friendly notice and every other feature keeps working.
-The auto-categorization tags are deliberately rule-based so the app still
-feels "smart" offline.
+Design decisions worth noting:
+
+- **Math in code, language in the model.** Charts, totals, and percentages are computed in JavaScript; the LLM only writes the natural-language analysis. LLMs are slow, metered, and unreliable at arithmetic — pre-computing the statistics produces faster, cheaper, and more accurate results.
+- **Batched classification.** Categorization sends all pending titles in one API call rather than one call per expense, respecting free-tier rate limits.
+- **Graceful degradation.** Opened as a local file with no server, the AI buttons show a friendly notice and every other feature keeps working. The pie chart works offline because it never depended on the AI in the first place.
 
 ## Running locally
 
-Just open `index.html` in a browser — everything except the two AI buttons
-works with zero setup.
+Open `index.html` in a browser. Everything except the AI features works with zero setup. For a local server, the VS Code Live Server extension also works.
 
-## Deploying (for the AI features)
+## Deploying
 
-1. Push this folder to a GitHub repo
-2. Import the repo at [vercel.com](https://vercel.com) (zero config needed —
-   Vercel auto-detects `api/ai.js` as a serverless function)
-3. Get a free Gemini API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-4. In Vercel → Project → Settings → Environment Variables, add
-   `GEMINI_API_KEY` = your key
-5. Redeploy — done
+1. Push this folder to a GitHub repository
+2. Import the repository at vercel.com — no configuration needed; `api/ai.js` is auto-detected as a serverless function
+3. Create a free Gemini API key at aistudio.google.com/apikey
+4. In Vercel, add an environment variable `GEMINI_API_KEY` with the key as its value
+5. Redeploy
+
+## Project structure
+
+```
+expense-tracker/
+├── api/
+│   └── ai.js        Serverless AI proxy (receipt, summary, categorize)
+├── index.html       Page structure
+├── style.css        Styling (custom design over Bootstrap)
+├── script.js        Application logic
+└── README.md
+```
 
 ## Notes
 
-- On first run the app seeds the three sample expenses from the assignment
-  screenshots so the UI is immediately populated. Delete them freely; the app
-  won't re-seed.
-- The bar chart is hand-built (flexbox + CSS transitions) to demonstrate the
-  logic rather than importing a chart library.
+- On first visit the app seeds demo expenses spanning 2022–2026 across all categories, so the chart, filter, and insights are immediately demonstrable. Seeded data can be freely edited or deleted and will not re-seed.
+- The bar chart and pie chart are hand-built (flexbox, CSS transitions, and conic-gradient) to demonstrate the underlying logic rather than importing a chart library.
