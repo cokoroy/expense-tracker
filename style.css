@@ -61,8 +61,9 @@ body {
   border: 2px dashed var(--accent);
   color: var(--accent);
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.35);
+  padding: 0.4rem 0.6rem;
 }
 .btn-outline-brand:hover { background: rgba(255, 255, 255, 0.6); color: var(--accent); }
 

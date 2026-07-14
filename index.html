@@ -40,16 +40,15 @@
               <input type="date" class="form-control" id="dateInput">
               <div class="invalid-feedback">Please pick a date.</div>
             </div>
-            <div class="col-12 col-md-6 d-flex align-items-end">
+            <div class="col-12 col-md-6">
               <!-- AI feature 1: receipt scanning -->
-              <div class="w-100">
-                <input type="file" id="receiptInput" accept="image/*" capture="environment" class="d-none">
-                <button type="button" class="btn btn-outline-brand w-100" id="scanReceiptBtn">
-                  <span id="scanReceiptLabel">📷 Scan a receipt (AI)</span>
-                  <span id="scanReceiptSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-                </button>
-                <div class="form-text ai-hint" id="receiptHint">Upload a receipt photo and the form fills itself.</div>
-              </div>
+              <label class="form-label d-none d-md-block" aria-hidden="true">&nbsp;</label>
+              <input type="file" id="receiptInput" accept="image/*" capture="environment" class="d-none">
+              <button type="button" class="btn btn-outline-brand w-100" id="scanReceiptBtn">
+                <span id="scanReceiptLabel">📷 Scan a receipt (AI)</span>
+                <span id="scanReceiptSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+              </button>
+              <div class="form-text ai-hint" id="receiptHint">Upload a receipt photo and the form fills itself.</div>
             </div>
           </div>
 
