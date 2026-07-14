@@ -52,13 +52,60 @@ function loadExpenses() {
     expenses = [];
   }
 
-  // First run: seed with the sample data from the assignment screenshots
+  // First run: seed with realistic demo data covering all years and categories.
+  // Categories are pre-set so no AI quota is used on first load.
   if (expenses.length === 0 && !localStorage.getItem(SEED_KEY)) {
-    expenses = [
-      { id: uid(), title: "New TV",           amount: 799.49, date: "2021-03-12" },
-      { id: uid(), title: "Car Insurance",    amount: 294.67, date: "2021-03-28" },
-      { id: uid(), title: "New Desk (Wooden)", amount: 450,   date: "2021-06-12" }
+    var seed = [
+      // 2022
+      ["Unifi Home Internet", 129.00, "2022-01-05", "Bills & Utilities"],
+      ["Nasi Lemak Antarabangsa", 12.50, "2022-02-14", "Food & Drinks"],
+      ["Petrol RON95", 80.00, "2022-03-09", "Transport"],
+      ["GSC Midvalley Movie", 22.00, "2022-05-21", "Entertainment"],
+      ["Guardian Vitamins", 45.90, "2022-07-03", "Health & Fitness"],
+      ["Shopee 7.7 Sale Haul", 156.30, "2022-07-07", "Shopping"],
+      ["Car Road Tax Renewal", 90.00, "2022-09-15", "Other"],
+      ["Mamak Supper", 18.40, "2022-11-26", "Food & Drinks"],
+      // 2023
+      ["TNB Electricity Bill", 145.60, "2023-01-10", "Bills & Utilities"],
+      ["Touch n Go Reload", 100.00, "2023-02-02", "Transport"],
+      ["Ayam Penyet Best", 15.90, "2023-03-18", "Food & Drinks"],
+      ["Gym Membership (3 months)", 210.00, "2023-04-01", "Health & Fitness"],
+      ["Steam Summer Sale", 89.00, "2023-06-29", "Entertainment"],
+      ["IKEA Bookshelf", 249.00, "2023-08-12", "Shopping"],
+      ["Birthday Gift for Mum", 120.00, "2023-10-08", "Other"],
+      ["Maxis Postpaid", 98.00, "2023-12-05", "Bills & Utilities"],
+      // 2024
+      ["Car Insurance Renewal", 1850.00, "2024-01-20", "Bills & Utilities"],
+      ["ZUS Coffee", 11.90, "2024-02-24", "Food & Drinks"],
+      ["KTM to Ipoh", 46.00, "2024-04-13", "Transport"],
+      ["Whey Protein 2kg", 179.00, "2024-05-30", "Health & Fitness"],
+      ["Uniqlo T-shirts", 117.80, "2024-07-19", "Shopping"],
+      ["Netflix Annual", 204.00, "2024-08-01", "Entertainment"],
+      ["Wedding Angpau", 200.00, "2024-09-28", "Other"],
+      ["Laksa Penang Trip", 28.50, "2024-11-16", "Food & Drinks"],
+      // 2025
+      ["Air Selangor Bill", 38.20, "2025-01-08", "Bills & Utilities"],
+      ["Grab to KLIA", 85.00, "2025-02-11", "Transport"],
+      ["Dinner at Korean BBQ", 96.00, "2025-03-22", "Food & Drinks"],
+      ["Dental Scaling", 150.00, "2025-05-06", "Health & Fitness"],
+      ["Mr DIY Toolbox", 67.40, "2025-06-14", "Shopping"],
+      ["Concert Ticket", 288.00, "2025-08-23", "Entertainment"],
+      ["Laptop Repair", 320.00, "2025-10-30", "Other"],
+      ["Celcom Prepaid Topup", 60.00, "2025-12-19", "Bills & Utilities"],
+      // 2026 (up to July)
+      ["Tyre Replacement x2", 560.00, "2026-01-17", "Transport"],
+      ["Tealive Boba", 10.50, "2026-02-07", "Food & Drinks"],
+      ["Watsons Skincare", 84.60, "2026-03-12", "Shopping"],
+      ["Badminton Court Booking", 30.00, "2026-04-25", "Health & Fitness"],
+      ["Spotify Premium", 23.90, "2026-05-15", "Entertainment"],
+      ["Celcom Prepaid", 60.00, "2026-06-13", "Bills & Utilities"],
+      ["Ayam Gepuk Pak Gendut", 65.50, "2026-07-13", "Food & Drinks"],
+      ["Car Insurance", 3000.00, "2026-07-14", "Bills & Utilities"],
+      ["Duit Raya", 150.00, "2026-06-01", "Other"]
     ];
+    expenses = seed.map(function (s) {
+      return { id: uid(), title: s[0], amount: s[1], date: s[2], category: s[3] };
+    });
     localStorage.setItem(SEED_KEY, "1");
     saveExpenses();
   }
