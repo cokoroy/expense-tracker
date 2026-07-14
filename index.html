@@ -82,7 +82,15 @@
           <span id="aiSummarySpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
         </button>
       </div>
-      <div id="aiSummaryCard" class="ai-summary d-none"></div>
+      <!-- Insight section: pie chart (built client-side) + AI analysis paragraph -->
+      <div id="insightSection" class="ai-summary d-none">
+        <div class="insight-pie-wrap">
+          <div id="pieChart" class="pie-chart" role="img" aria-label="Spending by category"></div>
+          <ul id="pieLegend" class="pie-legend"></ul>
+        </div>
+        <p id="aiSummaryText" class="insight-text d-none"></p>
+        <p id="aiSummaryLoading" class="insight-text insight-loading d-none">Analysing your spending…</p>
+      </div>
 
       <!-- Yearly total strip -->
       <div id="yearTotalStrip" class="year-total d-none">

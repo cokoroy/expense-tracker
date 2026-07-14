@@ -219,7 +219,8 @@ function renderAll() {
   renderChart();
   renderList();
   $("#aiSummaryYear").text(selectedYear);
-  $("#aiSummaryCard").addClass("d-none").empty();
+  $("#insightSection").addClass("d-none");
+  $("#aiSummaryText").addClass("d-none").empty();
 }
 
 /* ---------- Form handling ---------- */
@@ -372,28 +373,87 @@ function setScanLoading(loading) {
   $("#scanReceiptLabel").text(loading ? "Reading receipt… " : "📷 Scan a receipt (AI)");
 }
 
-/* ----- Feature 2: yearly AI insights ----- */
+/* ----- Feature 2: yearly insights (pie chart + AI analysis) ----- */
+
+var PIE_COLORS = ["#7b3fbf", "#b39ddb", "#4826a8", "#e2c7ff", "#9955e8", "#5e35b1", "#cbb3ea"];
+
+function renderPie(yearExpenses) {
+  // Total per category, largest first
+  var totals = {};
+  yearExpenses.forEach(function (e) {
+    totals[e.category] = (totals[e.category] || 0) + Number(e.amount);
+  });
+  var entries = Object.keys(totals)
+    .map(function (name) { return { name: name, amount: totals[name] }; })
+    .sort(function (a, b) { return b.amount - a.amount; });
+
+  var grand = entries.reduce(function (s, e) { return s + e.amount; }, 0);
+
+  // Build the conic-gradient (each slice from its start angle to end angle)
+  var stops = [];
+  var angle = 0;
+  var $legend = $("#pieLegend").empty();
+
+  entries.forEach(function (entry, i) {
+    var color = PIE_COLORS[i % PIE_COLORS.length];
+    var slice = (entry.amount / grand) * 360;
+    stops.push(color + " " + angle + "deg " + (angle + slice) + "deg");
+    angle += slice;
+
+    var pct = Math.round((entry.amount / grand) * 100);
+    var $li = $(
+      '<li><span class="dot"></span>' +
+      '<span class="cat-name"></span>' +
+      '<span class="cat-amount"></span></li>'
+    );
+    $li.find(".dot").css("background", color);
+    $li.find(".cat-name").text(entry.name + " (" + pct + "%)");
+    $li.find(".cat-amount").text(formatRM(entry.amount));
+    $legend.append($li);
+  });
+
+  $("#pieChart").css("background", "conic-gradient(" + stops.join(", ") + ")");
+}
 
 function handleAISummary() {
   var yearExpenses = expenses
     .filter(function (e) { return new Date(e.date).getFullYear() === selectedYear; })
-    .map(function (e) { return { title: e.title, amount: e.amount, date: e.date, category: categorize(e.title) }; });
+    .map(function (e) {
+      return { title: e.title, amount: e.amount, date: e.date, category: categorize(e.title) };
+    });
 
   if (yearExpenses.length === 0) {
     showToast("No expenses in " + selectedYear + " to analyse.");
     return;
   }
 
+  // 1) Pie chart renders instantly from local data — no AI needed
+  renderPie(yearExpenses);
+  $("#insightSection").removeClass("d-none");
+  $("#aiSummaryText").addClass("d-none").empty();
+
+  // 2) AI paragraph loads underneath
+  if (aiAvailable === false) {
+    $("#aiSummaryText")
+      .text("AI analysis is available in the hosted version — the chart above is computed locally.")
+      .removeClass("d-none");
+    return;
+  }
+
+  $("#aiSummaryLoading").removeClass("d-none");
   setSummaryLoading(true);
   callAI({ action: "summary", year: selectedYear, expenses: yearExpenses })
     .then(function (data) {
-      $("#aiSummaryCard").text(data.summary || "No insights returned.").removeClass("d-none");
+      $("#aiSummaryText").text(data.summary || "No insights returned.").removeClass("d-none");
     })
     .catch(function () {
       aiAvailable = false;
-      aiUnavailableMessage();
+      $("#aiSummaryText")
+        .text("AI analysis is unavailable right now — the chart above is computed locally.")
+        .removeClass("d-none");
     })
     .finally(function () {
+      $("#aiSummaryLoading").addClass("d-none");
       setSummaryLoading(false);
     });
 }
@@ -434,8 +494,6 @@ $(function () {
     handleReceiptFile(this.files[0]);
   });
 
-  $("#aiSummaryBtn").on("click", function () {
-    if (aiAvailable === false) { aiUnavailableMessage(); return; }
-    handleAISummary();
-  });
+  // The pie chart works offline; only the AI paragraph needs the server
+  $("#aiSummaryBtn").on("click", handleAISummary);
 });

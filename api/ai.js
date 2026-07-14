@@ -95,12 +95,32 @@ export default async function handler(req, res) {
         category: String(e.category || "").slice(0, 30),
       }));
 
+      // Pre-compute stats in code (LLMs are unreliable at arithmetic)
+      const total = safeExpenses.reduce((s, e) => s + e.amount, 0);
+      const byMonth = {};
+      const byCategory = {};
+      for (const e of safeExpenses) {
+        const m = new Date(e.date).toLocaleString("en", { month: "long" });
+        byMonth[m] = Math.round(((byMonth[m] || 0) + e.amount) * 100) / 100;
+        byCategory[e.category] =
+          Math.round(((byCategory[e.category] || 0) + e.amount) * 100) / 100;
+      }
+      const biggest = safeExpenses.reduce((a, b) => (b.amount > a.amount ? b : a));
+
       const prompt =
-        `Here are a user's expenses for ${Number(year) || "the year"} in Malaysian Ringgit (RM), as JSON:\n` +
-        JSON.stringify(safeExpenses) +
-        "\n\nWrite a short, friendly spending insight (3-4 sentences max): " +
-        "total spent, the peak month and what drove it, the dominant category, " +
-        "and one practical observation. Use RM for amounts. Plain text only, no markdown.";
+        `You are a personal finance assistant analysing a user's ${Number(year) || ""} expenses in Malaysian Ringgit (RM).\n\n` +
+        `Pre-computed stats:\n` +
+        `- Total spent: RM${total.toFixed(2)}\n` +
+        `- Totals by month: ${JSON.stringify(byMonth)}\n` +
+        `- Totals by category: ${JSON.stringify(byCategory)}\n` +
+        `- Largest single expense: ${biggest.title} (RM${biggest.amount})\n\n` +
+        `Full expense list: ${JSON.stringify(safeExpenses)}\n\n` +
+        `Write EXACTLY ONE paragraph (4-6 sentences) that analyses this spending: ` +
+        `the overall total and how it was distributed across the year, the peak month and what drove it, ` +
+        `and the dominant category with its share of total spending. ` +
+        `Then end the paragraph with one specific, actionable financial suggestion based on the actual data ` +
+        `(for example a recurring cost worth reviewing, a category to set a budget for, or a savings habit). ` +
+        `Be specific with RM amounts and percentages. Plain text only, no markdown, no bullet points, no headings.`;
 
       const result = await callGemini(apiKey, [{ parts: [{ text: prompt }] }]);
       return res.status(200).json({ summary: result.trim() });
