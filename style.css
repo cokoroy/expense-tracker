@@ -185,6 +185,8 @@ body {
   padding: 0;
 }
 .expense-actions button:hover { color: #fff; }
+.expense-actions button i { font-size: 0.9rem; }
+.expense-actions .delete-btn:hover { color: #ff8a8a; }
 
 /* ---------- Misc ---------- */
 .empty-message { text-align: center; font-weight: 700; padding: 1rem 0 0.5rem; }

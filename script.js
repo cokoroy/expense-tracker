@@ -195,8 +195,8 @@ function renderList() {
       "  </div>" +
       '  <div class="expense-amount"></div>' +
       '  <div class="expense-actions">' +
-      '    <button type="button" class="edit-btn" title="Edit">✏️</button>' +
-      '    <button type="button" class="delete-btn" title="Delete">🗑️</button>' +
+      '    <button type="button" class="edit-btn" title="Edit" aria-label="Edit expense"><i class="bi bi-pencil"></i></button>' +
+      '    <button type="button" class="delete-btn" title="Delete" aria-label="Delete expense"><i class="bi bi-trash"></i></button>' +
       "  </div>" +
       "</div>"
     );
@@ -375,7 +375,7 @@ function handleReceiptFile(file) {
 function setScanLoading(loading) {
   $("#scanReceiptBtn").prop("disabled", loading);
   $("#scanReceiptSpinner").toggleClass("d-none", !loading);
-  $("#scanReceiptLabel").text(loading ? "Reading receipt… " : "📷 Scan a receipt (AI)");
+  $("#scanReceiptLabel").html(loading ? "Reading receipt… " : '<i class="bi bi-camera me-1"></i>Scan a receipt (AI)');
 }
 
 /* ----- Feature 2: yearly insights (pie chart + AI analysis) ----- */
