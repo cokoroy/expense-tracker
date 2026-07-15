@@ -427,7 +427,7 @@ function setScanLoading(loading) {
 
 /* ----- Feature 2: yearly insights (pie chart + AI analysis) ----- */
 
-var PIE_COLORS = ["#7b3fbf", "#b39ddb", "#4826a8", "#e2c7ff", "#9955e8", "#5e35b1", "#cbb3ea"];
+var PIE_COLORS = ["#9d4edd", "#2ec4b6", "#ffb703", "#ef476f", "#4cc9f0", "#90be6d", "#f9844a"];
 
 function renderPie(yearExpenses) {
   // Total per category, largest first
