@@ -2,7 +2,7 @@
 
 A mobile-responsive expense tracker built with HTML, CSS, JavaScript, Bootstrap 5, and jQuery, with AI-assisted features served through a serverless proxy.
 
-**Live demo:** https://YOUR-PRODUCTION-DOMAIN.vercel.app
+**Live demo:** https://expense-tracker-six-xi-24.vercel.app/
 
 ## Requirements coverage
 
@@ -55,13 +55,6 @@ Design decisions worth noting:
 
 Open `index.html` in a browser. Everything except the AI features works with zero setup. For a local server, the VS Code Live Server extension also works.
 
-## Deploying
-
-1. Push this folder to a GitHub repository
-2. Import the repository at vercel.com — no configuration needed; `api/ai.js` is auto-detected as a serverless function
-3. Create a free Gemini API key at aistudio.google.com/apikey
-4. In Vercel, add an environment variable `GEMINI_API_KEY` with the key as its value
-5. Redeploy
 
 ## Project structure
 
